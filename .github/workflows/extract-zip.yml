@@ -1,1 +1,52 @@
 
+name: Extract Project ZIP
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Extract project files
+        shell: bash
+        run: |
+          set -e
+          ZIP_FILE=$(find . -maxdepth 1 -type f -iname "*.zip" | head -n 1)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "No ZIP file found in repository root."
+            exit 1
+          fi
+
+          mkdir -p /tmp/project-files
+          unzip -q "$ZIP_FILE" -d /tmp/project-files
+
+          PROJECT_ROOT=$(find /tmp/project-files -name package.json -type f \
+            -printf '%d %h\n' | sort -n | head -n 1 | cut -d' ' -f2-)
+
+          if [ -z "$PROJECT_ROOT" ]; then
+            echo "Could not find the project root package.json."
+            find /tmp/project-files -maxdepth 4 -type f
+            exit 1
+          fi
+
+          cp -a "$PROJECT_ROOT"/. .
+          rm -f "$ZIP_FILE"
+
+      - name: Save extracted files to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Extract project starter files"
+            git push
+          fi
+
