@@ -1,14 +1,15 @@
+
 {
   "name": "api",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "nest start --watch",
-    "build": "nest build",
+    "build": "prisma generate --schema prisma/schema.prisma && nest build",
     "start": "node dist/main.js",
     "lint": "echo \"Add ESLint before production\"",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push"
+    "db:generate": "prisma generate --schema prisma/schema.prisma",
+    "db:push": "prisma db push --schema prisma/schema.prisma"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
