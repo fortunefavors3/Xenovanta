@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,81 +8,105 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum TenantStatus { ACTIVE SUSPENDED }
-enum UserRole { PLAYER TENANT_ADMIN PLATFORM_ADMIN SUPPORT }
-enum AccountType { DEMO }
-enum LedgerDirection { DEBIT CREDIT }
-enum LedgerStatus { POSTED }
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum UserRole {
+  PLAYER
+  TENANT_ADMIN
+  PLATFORM_ADMIN
+  SUPPORT
+}
+
+enum AccountType {
+  DEMO
+}
+
+enum LedgerDirection {
+  DEBIT
+  CREDIT
+}
+
+enum LedgerStatus {
+  POSTED
+}
 
 model Tenant {
-  id          String       @id @default(cuid())
-  slug        String       @unique
-  name        String
-  status      TenantStatus @default(ACTIVE)
-  createdAt   DateTime     @default(now())
-  users       User[]
-  accounts    WalletAccount[]
-  games       TenantGame[]
+  id        String       @id @default(cuid())
+  slug      String       @unique
+  name      String
+  status    TenantStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  users     User[]
+  accounts  WalletAccount[]
+  games     TenantGame[]
 }
 
 model User {
-  id            String   @id @default(cuid())
-  tenantId      String
-  email         String
-  displayName   String
-  role          UserRole @default(PLAYER)
-  createdAt     DateTime @default(now())
-  tenant        Tenant   @relation(fields: [tenantId], references: [id])
-  accounts      WalletAccount[]
+  id          String   @id @default(cuid())
+  tenantId    String
+  email       String
+  displayName String
+  role        UserRole @default(PLAYER)
+  createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  accounts    WalletAccount[]
+
   @@unique([tenantId, email])
   @@index([tenantId, role])
 }
 
 model WalletAccount {
-  id          String      @id @default(cuid())
-  tenantId    String
-  userId      String
-  type        AccountType @default(DEMO)
-  currency    String      @default("DEMO")
-  createdAt   DateTime    @default(now())
-  tenant      Tenant      @relation(fields: [tenantId], references: [id])
-  user        User        @relation(fields: [userId], references: [id])
-  entries     LedgerEntry[]
+  id        String      @id @default(cuid())
+  tenantId  String
+  userId    String
+  type      AccountType @default(DEMO)
+  currency  String      @default("DEMO")
+  createdAt DateTime    @default(now())
+  tenant    Tenant      @relation(fields: [tenantId], references: [id])
+  user      User        @relation(fields: [userId], references: [id])
+  entries   LedgerEntry[]
+
   @@index([tenantId, userId])
 }
 
 model LedgerTransaction {
-  id             String         @id @default(cuid())
+  id             String       @id @default(cuid())
   tenantId       String
   idempotencyKey String
   description    String
-  status         LedgerStatus   @default(POSTED)
-  createdAt      DateTime       @default(now())
+  status         LedgerStatus @default(POSTED)
+  createdAt      DateTime     @default(now())
   entries        LedgerEntry[]
+
   @@unique([tenantId, idempotencyKey])
   @@index([tenantId, createdAt])
 }
 
 model LedgerEntry {
-  id            String           @id @default(cuid())
+  id            String            @id @default(cuid())
   transactionId String
   accountId     String
   direction     LedgerDirection
   amount        BigInt
-  createdAt     DateTime         @default(now())
+  createdAt     DateTime          @default(now())
   transaction   LedgerTransaction @relation(fields: [transactionId], references: [id])
-  account       WalletAccount    @relation(fields: [accountId], references: [id])
+  account       WalletAccount     @relation(fields: [accountId], references: [id])
+
   @@index([accountId, createdAt])
 }
 
 model TenantGame {
-  id          String   @id @default(cuid())
-  tenantId    String
-  gameCode    String
-  title       String
-  category    String
-  enabled     Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  id        String   @id @default(cuid())
+  tenantId  String
+  gameCode  String
+  title     String
+  category  String
+  enabled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
   @@unique([tenantId, gameCode])
 }
